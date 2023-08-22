@@ -53,13 +53,13 @@ class Obj(object):
         ''' Set class object default data if required
         '''
 
-        if self.plot.figSize.x == 0:
+        if self.plot.singles.figSize.x == 0:
             
-            self.plot.figSize.x = 8
+            self.plot.singles.figSize.x = 8
             
-        if self.plot.figSize.y == 0:
+        if self.plot.singles.figSize.y == 0:
             
-            self.plot.figSize.y = 6
+            self.plot.singles.figSize.y = 6
                          
     def _SetPlotTextPos(self, plot, xmin, xmax, ymin, ymax):
         ''' Set position of text objects for matplotlib
@@ -89,25 +89,25 @@ class Obj(object):
         ''' Set class object default data if required
         '''
         
-        if self.plot.figSize.x == 0:
+        if self.plot.singles.figSize.x == 0:
             
-            self.plot.figSize.x = 8
+            self.plot.singles.figSize.x = 8
             
-        if self.plot.figSize.y == 0:
+        if self.plot.singles.figSize.y == 0:
             
-            self.plot.figSize.y = 6
+            self.plot.singles.figSize.y = 6
 
     def _SetModelDefaults(self):
         ''' Set class object default data if required
         '''
         
-        if self.plot.figSize.x == 0:
+        if self.plot.singles.figSize.x == 0:
             
-            self.plot.figSize.x = 4
+            self.plot.singles.figSize.x = 4
             
-        if self.plot.figSize.y == 0:
+        if self.plot.singles.figSize.y == 0:
             
-            self.plot.figSize.y = 4
+            self.plot.singles.figSize.y = 4
             
         # Check if Manual feature selection is set
         if self.manualFeatureSelection.apply:

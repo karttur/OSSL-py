@@ -50,11 +50,11 @@ import os
 
 from copy import deepcopy
 
-from math import ceil
+#from math import ceil
 
 # Third party imports
 
-import pprint
+#import pprint
 
 import tempfile
 
@@ -200,11 +200,7 @@ class RegressionModels:
                 if hasattr(symbol, 'color'):
                 
                     self.featureSymbolColor = getattr(symbol, 'color')
-                    
-                if hasattr(symbol, 'marker'):
-                
-                    self.featureSymbolMarker = getattr(symbol, 'marker')
-                    
+                                        
                 if hasattr(symbol, 'size'):
                 
                     self.featureSymbolSize = getattr(symbol, 'size')
@@ -212,25 +208,90 @@ class RegressionModels:
     def _PlotRegr(self, obs, pred, suptitle, title, txtstr,  txtstrHyperParams, regrModel, modeltest):
         '''
         '''
-
-        fig, ax = plt.subplots()
-        ax.scatter(obs, pred, edgecolors=(0, 0, 0),  color=self.featureSymbolColor,
-                   s=self.featureSymbolSize, marker=self.featureSymbolMarker)
-        ax.plot([obs.min(), obs.max()], [obs.min(), obs.max()], 'k--', lw=1)
-        ax.set_xlabel('Observations')
-        ax.set_ylabel('Predictions')
-        plt.suptitle(suptitle)
-        plt.title(title)
-        plt.text(obs.min(), (obs.max()-obs.min())*0.8, txtstr,  wrap=True)
+        if self.plot.singles.apply:
         
-        #plt.text(obs.max()-((obs.max()-obs.min())*0.3), (obs.min()+obs.max())*0.1, txtstrHyperParams,  wrap=True)
-        
-        plt.show()
-        
-        if self.figure.apply:
-                    
-            fig.savefig(self.imageFPND[self.targetFeature][regrModel][modeltest])
+            fig, ax = plt.subplots()
+            ax.scatter(obs, pred, edgecolors=(0, 0, 0),  color=self.featureSymbolColor,
+                       s=self.paramD['regressionModelSymbols'][self.regrModel[0]]['size'], 
+                       marker=self.paramD['regressionModelSymbols'][self.regrModel[0]]['marker'])
+            ax.plot([obs.min(), obs.max()], [obs.min(), obs.max()], 'k--', lw=1)
+            ax.set_xlabel('Observations')
+            ax.set_ylabel('Predictions')
+            plt.suptitle(suptitle)
+            plt.title(title)
+            plt.text(obs.min(), (obs.max()-obs.min())*0.8, txtstr,  wrap=True)
             
+            #plt.text(obs.max()-((obs.max()-obs.min())*0.3), (obs.min()+obs.max())*0.1, txtstrHyperParams,  wrap=True)
+            
+            if self.plot.singles.screenShow:
+                    
+                plt.show()
+                    
+            if self.plot.singles.savePng:
+                        
+                fig.savefig(self.imageFPND[self.targetFeature][regrModel][modeltest])
+            
+            plt.close(fig=fig)  
+          
+        if self.plot.rows.apply:
+               
+            if self.plot.rows.targetFeatures.apply:
+                
+                # modeltest is either trainTest of Kfold
+                if modeltest in self.plot.rows.targetFeatures.columns:
+                        
+                    self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[modeltest] ].scatter(obs, pred, edgecolors=(0, 0, 0),  color=self.featureSymbolColor,
+                           s=self.paramD['regressionModelSymbols'][self.regrModel[0]]['size'],   
+                           marker=self.paramD['regressionModelSymbols'][self.regrModel[0]]['marker'])
+                    
+                    self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[modeltest] ].plot([obs.min(), obs.max()], [obs.min(), obs.max()], 'k--', lw=1)
+                    
+                    self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[modeltest]].text(.05, .95, 
+                                                    txtstr, ha='left', va='top', 
+                                                    transform=self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[modeltest]].transAxes)
+
+                    self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[modeltest]].yaxis.set_label_position("right")
+                     
+                    # if at last column
+                    if self.targetFeaturePlotColumnD[modeltest] == len(self.plot.rows.regressionModels.columns)-1:
+                       
+                        self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[modeltest]].set_ylabel('Predictions')
+                    
+                    # if at last row
+                    if self.targetN == self.nTargetFeatures-1:
+                        
+                        self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[modeltest]].set_xlabel('Observations')
+                  
+            if self.plot.rows.regressionModels.apply:
+                
+                # modeltest is either trainTest of Kfold
+                if modeltest in self.plot.rows.regressionModels.columns:
+                        
+                    #self.columnAxs[self.regrModel][self.targetFeature][self.regrN, self.regressionModelPlotColumnD[modeltest] ].scatter(obs, pred, edgecolors=(0, 0, 0),  color=self.featureSymbolColor,
+                    #       s=self.featureSymbolSize, marker=self.featureSymbolMarker)
+                    
+                    self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[modeltest] ].scatter(obs, pred, edgecolors=(0, 0, 0),  color=self.featureSymbolColor,
+                           s=self.paramD['regressionModelSymbols'][self.regrModel[0]]['size'], 
+                           marker=self.paramD['regressionModelSymbols'][self.regrModel[0]]['marker'])
+                    
+                    self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[modeltest]].plot([obs.min(), obs.max()], [obs.min(), obs.max()], 'k--', lw=1)
+      
+                    
+                    self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[modeltest]].text(.05, .95, txtstr, ha='left', va='top', 
+                                                    transform=self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[modeltest]].transAxes)
+                    
+                    self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[modeltest]].yaxis.set_label_position("right")
+                    
+                    # if at last column
+                    if self.regressionModelPlotColumnD[modeltest] == len(self.plot.rows.targetFeatures.columns)-1:
+                            
+                        self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[modeltest]].set_ylabel('Predictions')
+                    
+                    # if at last row
+                    if self.regrN == self.nRegrModels-1:
+                        
+                        self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[modeltest]].set_xlabel('Observations')
+                                          
     def _RegModelSelectSet(self):
         """ Set the regressors to evaluate
         """
@@ -292,152 +353,233 @@ class RegressionModels:
         '''
         '''
        
-        #Loop over the defined models
-        for m in self.regressorModels:
-            #Retrieve the model name and the model itself
-            name,model = m
-            
-            if self.modelSelectD[name]:
-                SNULLE
-                Xmodel = self.X[self.modelSelectD[name]]
-                
-                #Split the data into training and test subsets
-                X_train, X_test, y_train, y_test = model_selection.train_test_split(Xmodel, self.y, test_size=self.modelTests.trainTest.testSize)
+        #Retrieve the model name and the model itself
+        name,model = self.regrModel
+        
+        #Split the data into training and test subsets
+        X_train, X_test, y_train, y_test = model_selection.train_test_split(self.X, self.y, test_size=self.modelTests.trainTest.testSize)
 
-            else:
-                
-                #Split the data into training and test subsets
-                X_train, X_test, y_train, y_test = model_selection.train_test_split(self.X, self.y, test_size=self.modelTests.trainTest.testSize)
+        #Fit the model            
+        model.fit(X_train, y_train)
+        
+        #Predict the independent variable in the test subset
+        predict = model.predict(X_test)
+        
+        self.trainTestResultD[self.targetFeature][name] = {'mse':mean_squared_error(y_test, predict),
+                                                           'r2': r2_score(y_test, predict),
+                                                           'hyperParameterSetting': self.jsonparamsD['regressionModels'][name]['hyperParams'],
+                                                           'pickle': self.trainTestPickleFPND[self.targetFeature][name]
+                                                           }
+        
+        # Save the complete model with cPickle
+        pickle.dump(model, open(self.trainTestPickleFPND[self.targetFeature][name],  'wb'))
+                   
+        if self.verbose:
+            
+            infoStr =  '                trainTest Model: %s\n' %(name)
+            infoStr += '                    hyperParams: %s\n' %(self.jsonparamsD['regressionModels'][name]['hyperParams'])
+            infoStr += '                    Mean squared error: %.2f\n' \
+            % self.trainTestResultD[self.targetFeature][name]['mse']
+            infoStr += '                    Variance (r2) score: %.2f\n' \
+            % self.trainTestResultD[self.targetFeature][name]['r2']
+        
+            print (infoStr)
 
-            #Fit the model            
-            model.fit(X_train, y_train)
+        if self.modelTests.trainTest.plot:
+            txtstr = 'nspectra: %s\n' %(self.X.shape[0])
+            txtstr += 'nbands: %s\n' %(self.X.shape[1])
+            #txtstr += 'min wl: %s\n' %(self.bandL[0])
+            #txtstr += 'max wl: %s\n' %(self.bandL[len(self.bandL)-1])
+            #txtstr += 'bands: %s\n' %( ' ,'.join('({0})'.format(w) for w in self.aggBandL)  )
+            #txtstr += 'width wl: %s' %(int(self.bandL[1]-self.bandL[0]))
             
-            #Predict the independent variable in the test subset
-            predict = model.predict(X_test)
+            #txtstrHyperParams =  self.HPtuningtxt+'\nHyper Parameters:\n'+'\n'.join([key+': '+str(value) for key, value in self.tunedModD[name].items()])
+            suptitle = '%s train/test model (testsize = %s)' %(self.targetFeature, self.modelTests.trainTest.testSize)
+            title = ('Model: %(mod)s; RMSE: %(rmse)2f; r2: %(r2)2f' \
+                      % {'mod':name,'rmse':mean_squared_error(y_test, predict),'r2': r2_score(y_test, predict)} )
             
-            self.trainTestResultD[self.targetFeature][name] = {'mse':mean_squared_error(y_test, predict),
-                                                               'r2': r2_score(y_test, predict),
-                                                               'hyperParameterSetting': self.jsonparamsD['regressionModels'][name]['hyperParams'],
-                                                               'pickle': self.traintestPickleFPND[self.targetFeature][name]
-                                                               }
-            
-            # Save the complete model with cPickle
-            pickle.dump(model, open(self.traintestPickleFPND[self.targetFeature][name],  'wb'))
-                       
-            if self.verbose:
-                
-                infoStr =  '                trainTest Model: %s\n' %(name)
-                infoStr += '                    hyperParams: %s\n' %(self.jsonparamsD['regressionModels'][name]['hyperParams'])
-                infoStr += '                    Mean squared error: %.2f\n' \
-                % self.trainTestResultD[self.targetFeature][name]['mse']
-                infoStr += '                    Variance (r2) score: %.2f\n' \
-                % self.trainTestResultD[self.targetFeature][name]['r2']
-            
-                print (infoStr)
-
-            if self.modelTests.trainTest.plot:
-                txtstr = 'nspectra: %s\n' %(self.X.shape[0])
-                txtstr += 'nbands: %s\n' %(self.X.shape[1])
-                #txtstr += 'min wl: %s\n' %(self.bandL[0])
-                #txtstr += 'max wl: %s\n' %(self.bandL[len(self.bandL)-1])
-                #txtstr += 'bands: %s\n' %( ' ,'.join('({0})'.format(w) for w in self.aggBandL)  )
-                #txtstr += 'width wl: %s' %(int(self.bandL[1]-self.bandL[0]))
-                
-                #txtstrHyperParams =  self.HPtuningtxt+'\nHyper Parameters:\n'+'\n'.join([key+': '+str(value) for key, value in self.tunedModD[name].items()])
-                suptitle = '%s train/test model (testsize = %s)' %(self.targetFeature, self.modelTests.trainTest.testSize)
-                title = ('Model: %(mod)s; RMSE: %(rmse)2f; r2: %(r2)2f' \
-                          % {'mod':name,'rmse':mean_squared_error(y_test, predict),'r2': r2_score(y_test, predict)} )
-                self._PlotRegr(y_test, predict, suptitle, title, txtstr, '',name, 'traintest')
+            txtstr = ('RMSE: %(rmse)2f\nr2: %(r2)2f\n nSamples: %(n)d' \
+                      % {'rmse':self.trainTestResultD[self.targetFeature][name]['mse'],
+                         'r2': self.trainTestResultD[self.targetFeature][name]['r2'],
+                         'n': self.X.shape[0]} )
+                        
+            self._PlotRegr(y_test, predict, suptitle, title, txtstr, '',name, 'trainTest')
                 
             
     def _RegrModKFold(self):
         """
         """
         
-        #Loop over the defined models
-        for m in self.regressorModels:
-            #Retrieve the model name and the model itself
-            name,model = m
-            
-            
-            print (self.modelSelectD[name])
+
+        #Retrieve the model name and the model itself
+        name,model = self.regrModel
         
-            print (self.columns)
+        predict = model_selection.cross_val_predict(model, self.X, self.y, cv=self.modelTests.Kfold.folds)
+        
+        mse = mean_squared_error(self.y, predict)
+        
+        r2 = r2_score(self.y, predict)
+                    
+        self.KfoldResultD[self.targetFeature][name] = {'mse': mse,
+                                                           'r2': r2,
+                                                           'hyperParameterSetting': self.jsonparamsD['regressionModels'][name]['hyperParams'],
+                                                           'pickle': self.KfoldPickleFPND[self.targetFeature][name]
+                                                           }
+        # Save the complete model with cPickle
+        pickle.dump(model, open(self.KfoldPickleFPND[self.targetFeature][name],  'wb'))
+                   
+        if self.verbose:
             
-            '''
-            if self.modelSelectD[name]:
-            
-                Xmodel = self.X[self.modelSelectD[name]]
-                
-                predict = model_selection.cross_val_predict(model, Xmodel, self.y, cv=self.modelTests.Kfold.folds)
+            infoStr =  '                Kfold Model: %s\n' %(name)
+            infoStr += '                    hyperParams: %s\n' %(self.jsonparamsD['regressionModels'][name]['hyperParams'])
+            infoStr += '                    Mean squared error: %.2f\n' \
+            % mse
+            infoStr += '                    Variance (r2) score: %.2f\n' \
+            % r2
+        
+            print (infoStr)
 
-            else:
-            '''
-            predict = model_selection.cross_val_predict(model, self.X, self.y, cv=self.modelTests.Kfold.folds)
-            
-            mse = mean_squared_error(self.y, predict)
-            
-            r2 = r2_score(self.y, predict)
-                        
-            self.KfoldResultD[self.targetFeature][name] = {'mse': mse,
-                                                               'r2': r2,
-                                                               'hyperParameterSetting': self.jsonparamsD['regressionModels'][name]['hyperParams'],
-                                                               'pickle': self.KfoldPickleFPND[self.targetFeature][name]
-                                                               }
-            
-            # Save the complete model with cPickle
-            pickle.dump(model, open(self.KfoldPickleFPND[self.targetFeature][name],  'wb'))
-                       
-            if self.verbose:
-                
-                infoStr =  '                Kfold Model: %s\n' %(name)
-                infoStr += '                    hyperParams: %s\n' %(self.jsonparamsD['regressionModels'][name]['hyperParams'])
-                infoStr += '                    Mean squared error: %.2f\n' \
-                % mse
-                infoStr += '                    Variance (r2) score: %.2f\n' \
-                % r2
-            
-                print (infoStr)
 
-            if self.modelTests.Kfold.plot:
-                txtstr = 'nspectra: %s\n' %(self.X.shape[0])
-                txtstr += 'nbands: %s\n' %(self.X.shape[1])
-                #txtstr += 'min wl: %s\n' %(self.bandL[0])
-                #txtstr += 'max wl: %s\n' %(self.bandL[len(self.bandL)-1])
-                #txtstr += 'bands: %s\n' %( ' ,'.join('({0})'.format(w) for w in self.aggBandL)  )
-                #txtstr += 'width wl: %s' %(int(self.bandL[1]-self.bandL[0]))
+        txtstr = 'nspectra: %s\n' %(self.X.shape[0])
+        txtstr += 'nbands: %s\n' %(self.X.shape[1])
+        #txtstr += 'min wl: %s\n' %(self.bandL[0])
+        #txtstr += 'max wl: %s\n' %(self.bandL[len(self.bandL)-1])
+        #txtstr += 'bands: %s\n' %( ' ,'.join('({0})'.format(w) for w in self.aggBandL)  )
+        #txtstr += 'width wl: %s' %(int(self.bandL[1]-self.bandL[0]))
+        
+        #txtstrHyperParams =  self.HPtuningtxt+'\nHyper Parameters:\n'+'\n'.join([key+': '+str(value) for key, value in self.tunedModD[name].items()])
+        suptitle = '%s Kfold model (nfolds = %s)' %(self.targetFeature, self.modelTests.Kfold.folds)
+        title = ('Model: %(mod)s; RMSE: %(rmse)2f; r2: %(r2)2f' \
+                  % {'mod':name,'rmse':mse,'r2': r2} )
+        
+        txtstr = ('RMSE: %(rmse)2f\nr2: %(r2)2f\nSamples: %(n)d' \
+                      % {'rmse':self.KfoldResultD[self.targetFeature][name]['mse'],
+                         'r2': self.KfoldResultD[self.targetFeature][name]['r2'],
+                         'n': self.X.shape[0]} )
+
+        self._PlotRegr(self.y, predict, suptitle, title, txtstr, '',name, 'Kfold')
+                          
+    def _PlotFeatureImportanceSingles(self, featureArray, importanceArray, errorArray, title, xyLabel, pngFPN):
+        '''
+        '''  
+        # Convert to a pandas series
+        importanceDF = pd.Series(importanceArray, index=featureArray)
+            
+        singlefig, ax = plt.subplots()
+        
+        if isinstance(errorArray, np.ndarray):
+            
+            importanceDF.plot.bar(yerr=errorArray, color=self.featureSymbolColor, ax=ax)
+        
+        else:
+            importanceDF.plot.bar(yerr=errorArray, color=self.featureSymbolColor, ax=ax)
+        
+        ax.set_title(title)
+            
+        if xyLabel[0]:
+            
+            ax.set_ylabel(xyLabel[0])
                 
-                #txtstrHyperParams =  self.HPtuningtxt+'\nHyper Parameters:\n'+'\n'.join([key+': '+str(value) for key, value in self.tunedModD[name].items()])
-                suptitle = '%s Kfold model (nfolds = %s)' %(self.targetFeature, self.modelTests.Kfold.folds)
-                title = ('Model: %(mod)s; RMSE: %(rmse)2f; r2: %(r2)2f' \
-                          % {'mod':name,'rmse':mse,'r2': r2} )
-                self._PlotRegr(self.y, predict, suptitle, title, txtstr, '',name, 'Kfold')
+        if xyLabel[1]:
+            
+            ax.set_ylabel(xyLabel[1])
+
+        if self.plot.tightLayout:
+            
+            singlefig.tight_layout()
+            
+        if self.plot.singles.screenShow:
                 
+            plt.show()
                 
+        if self.plot.singles.savePng:
+                
+            #fig.savefig(self.imageFPND[self.targetFeature][name]['featureImportance']['permutationImportance']) 
+            singlefig.savefig(pngFPN)
+        
+        plt.close(fig=singlefig)
+         
+    def _PlotFeatureImportanceRows(self, featureArray, importanceArray, errorArray, importanceCategory, yLabel):
+        '''
+        ''' 
+        
+        nnFS = self.X.shape
+                                        
+        text = 'nFeatures: %s' %(nnFS[1])
+                    
+        if self.targetFeatureSelectionTxt != None:
+            
+            text += '\n%s' %(self.targetFeatureSelectionTxt)
+            
+        if self.agglomerateTxt != None:
   
+            text += '\n%s' %(self.agglomerateTxt)
+            
+        if self.modelFeatureSelectionTxt != None:
+            
+            text += '\n%s' %(self.modelFeatureSelectionTxt)
+            
+        if self.plot.rows.targetFeatures.apply:
+        
+            if importanceCategory in self.plot.rows.targetFeatures.columns:
                 
+                self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[importanceCategory] ].bar(featureArray, importanceArray, yerr=errorArray, color=self.featureSymbolColor)
+                
+                self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[importanceCategory] ].tick_params(labelleft=False)
+
+                self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[importanceCategory]].text(.3, .95, text, ha='left', va='top', 
+                                                transform=self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[importanceCategory]].transAxes)
+
+                self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[importanceCategory]].set_ylabel(yLabel)
+
+                if importanceCategory == 'featureImportance':
+                
+                    # Draw horisontal line ay y=y
+                    self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[importanceCategory]].axhline(y=0, lw=1, c='black')
+                    
+                #x,y = SetTextPos(self.plot.text.x, self.plot.text.y, self.xylimD['xmin'], self.xylimD['xmax'], self.xylimD['ymin'], self.xylimD['ymax'])
+                
+                #self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD['permutationImportance'] ].text(x, y, text)
+                #self.columnAxs[self.targetFeature][ self.plotColumnD['permutationImportance'] ].set_ylabel('Mean accuracy decrease')
+                
+                # if at last row
+                if self.targetN == self.nTargetFeatures-1:
+                    
+                    self.columnAxs[self.regrModel[0]][self.targetN, self.targetFeaturePlotColumnD[importanceCategory]].set_xlabel('Features')
+   
+        if self.plot.rows.regressionModels.apply:
+        
+            if importanceCategory in self.plot.rows.regressionModels.columns:
+                
+                #self.columnAxs[self.regrModel][self.targetFeature][self.regrN, self.regressionModelPlotColumnD['permutationImportance'] ].bar(featureArray, permImportanceArray, yerr=errorArray, color=self.featureSymbolColor)
+
+                self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[importanceCategory] ].bar(featureArray, importanceArray, yerr=errorArray, color=self.featureSymbolColor)
+                
+                self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[importanceCategory] ].tick_params(labelleft=False) 
+
+
+                self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[importanceCategory]].text(.3, .95, text, ha='left', va='top', 
+                                                transform=self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[importanceCategory]].transAxes)
+
+                self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[importanceCategory]].set_ylabel(yLabel)
+
+                if importanceCategory == 'featureImportance':
+                
+                    # Draw horisontal line ay y=y
+                    self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[importanceCategory]].axhline(y=0, lw=1, c='black')
+
+                # if at last row
+                if self.regrN == self.nRegrModels-1:
+                    
+                    self.columnAxs[self.targetFeature][self.regrN, self.regressionModelPlotColumnD[importanceCategory]].set_xlabel('Features')
+
     def _FeatureImportance(self):
         '''
         '''
        
         #Retrieve the model name and the model itself
         name,model = self.regrModel
-        
-        print (self.modelSelectD[name])
-        
-        print (self.columns)
-        
-
-        '''
-        if self.modelSelectD[name]:
-        
-            Xmodel = self.X[self.modelSelectD[name]]
-            
-            #Split the data into training and test subsets
-            X_train, X_test, y_train, y_test = model_selection.train_test_split(Xmodel, self.y, test_size=self.modelTests.trainTest.testSize)
-
-        else:
-        '''    
+                 
         #Split the data into training and test subsets
         X_train, X_test, y_train, y_test = model_selection.train_test_split(self.X, self.y, test_size=self.modelTests.trainTest.testSize)
 
@@ -462,9 +604,7 @@ class RegressionModels:
         errorArray = permImportanceStd[sorted_idx][::-1][0:maxFeatures]
         
         featureArray = np.asarray(self.columns)[sorted_idx][::-1][0:maxFeatures]
-        
-        title = "Permutation importance\n Feature: %s; Model: %s" %(self.targetFeature, name)
-        
+       
         permImpD = {}
         
         for i in range(len(featureArray)):
@@ -473,29 +613,21 @@ class RegressionModels:
                                          'std': errorArray[i]}
             
         self.modelFeatureImportanceD[self.targetFeature][name]['permutationsImportance'] = permImpD
-
-                    
-        # Convert to a pandas series
-        permImportanceDF = pd.Series(permImportanceArray, index=featureArray)
+           
+        if self.plot.singles.apply:
             
-        fig, ax = plt.subplots()
+            title = "Permutation importance\n Feature: %s; Model: %s" %(self.targetFeature, name)
+  
+            xyLabel = ['Features', 'Mean accuracy decrease']
+  
+            pngFPN = self.imageFPND[self.targetFeature][name]['featureImportance']['permutationImportance']
             
-        permImportanceDF.plot.bar(yerr=errorArray, color=self.featureSymbolColor, ax=ax)
+            self._PlotFeatureImportanceSingles(featureArray, permImportanceArray, errorArray, title, xyLabel, pngFPN)
             
-        ax.set_title(title)
+        if self.plot.rows.apply:
             
-        ax.set_ylabel("Mean accuracy decrease")
+            self._PlotFeatureImportanceRows(featureArray, permImportanceArray, errorArray, 'permutationImportance', 'rel. Mean accur. decr.')
             
-        if self.plot.tightLayout:
-            
-            fig.tight_layout()
-                
-        plt.show()
-                
-        if self.figure.apply:
-                
-            fig.savefig(self.imageFPND[self.targetFeature][name]['featureImportance']['permutationImportance']) 
-        
         # Feature importance
         if name in ['OLS','TheilSen','Huber', "Ridge", "ElasticNet", 'logistic', 'SVR']:
             
@@ -523,37 +655,20 @@ class RegressionModels:
             
             self.modelFeatureImportanceD[self.targetFeature][name]['featureImportance'] = featImpD
             
-            # Convert to a pandas series
-            linearImportances = pd.Series(importanceArray, index=featureArray)
-            
-            fig, ax = plt.subplots()
-            
-            linearImportances.plot.bar(color=self.featureSymbolColor, ax=ax)
-            
-            title = "Linear feature coefficients\n Feature: %s; Model: %s" %(self.targetFeature, name)
-
-            ax.set_title(title)
-            
-            ax.set_ylabel("Coefficient")
-            
-            if self.plot.tightLayout:
-            
-                fig.tight_layout()
+            if self.plot.singles.apply:
                 
-            plt.show()
-                
-            if self.figure.apply:
-                
-                fig.savefig(self.imageFPND[self.targetFeature][name]['featureImportance']['regressionImportance'])   # save the figure to file
+                title = "Linear feature coefficients\n Feature: %s; Model: %s" %(self.targetFeature, name)
+  
+                xyLabels = ['Features','Coefficient']
+  
+                pngFPN = self.imageFPND[self.targetFeature][name]['featureImportance']['regressionImportance']
             
-            '''
-            # summarize feature importance
-            for i,v in enumerate(importance):
-                print('Feature: %0d, Score: %.5f' % (i,v))
-                # plot feature importance
-                pyplot.bar([x for x in range(len(importance))], importance)
-                pyplot.show()
-            '''
+                self._PlotFeatureImportanceSingles(featureArray, importanceArray, None, title, xyLabels, pngFPN)
+                
+            if self.plot.rows.apply:
+            
+                self._PlotFeatureImportanceRows(featureArray, importanceArray, None, 'featureImportance','rel. coef. weight')
+       
         elif name in ['KnnRegr','MLP']:
             ''' These models do not have any feature importance to report
             '''
@@ -584,50 +699,36 @@ class RegressionModels:
                     
             else:
                 
+                errorArray = None
+                
                 for i in range(len(featureArray)):
                     
                     featImpD[featureArray[i]] = {'MDI': importanceArray[i]}
                 
             self.modelFeatureImportanceD[self.targetFeature][name]['featureImportance'] = featImpD
 
-            # Convert to a pandas series
-            forest_importances = pd.Series(importanceArray, index=featureArray)
-            
-            fig, ax = plt.subplots()
-            
-            if name in ['RandForRegr']:
+            if self.plot.singles.apply:
                 
-                forest_importances.plot.bar(yerr=errorArray, color=self.featureSymbolColor, ax=ax)
-            
-            else:
-                
-                forest_importances.plot.bar(color=self.featureSymbolColor, ax=ax)
- 
-            title = "MDI feature importance\n Feature: %s; Model: %s" %(self.targetFeature, name)
+                title = "MDI feature importance\n Feature: %s; Model: %s" %(self.targetFeature, name)
 
-            ax.set_title(title)
-            
-            ax.set_ylabel("Mean decrease in impurity")
-            
-            if self.plot.tightLayout:
-            
-                fig.tight_layout()
-            
-            plt.show()
-            
-            if self.figure.apply:
+                xyLabel = ['Features', 'Mean impurity decrease']
+      
+                pngFPN = self.imageFPND[self.targetFeature][name]['featureImportance']['permutationImportance']
                 
-                fig.savefig(self.imageFPND[self.targetFeature][name]['featureImportance']['regressionImportance'])   # save the figure to file
+                self._PlotFeatureImportanceSingles(featureArray, importanceArray, errorArray, title, xyLabel, pngFPN)
+
+            if self.plot.rows.apply:
+                
+                
+                self._PlotFeatureImportanceRows(featureArray, importanceArray, errorArray, 'featureImportance', 'rel. mean impur. decr.')
             
     def _ManualFeatureSelector(self):
         '''
         '''
-        print (self.columns)
+
         # Reset self.columns
         self.columns = self.manualFeatureSelection.spectra
         
-        
-        print (self.columns)
         # Create the dataframe for the sepctra
         spectraDF = self.spectraDF[ self.columns  ]
         
@@ -637,8 +738,7 @@ class RegressionModels:
             
             bandL = [self.manualFeatureSelection.derivatives.firstWaveLength[b],
                      self.manualFeatureSelection.derivatives.lastWaveLength[b]]
-            
-            
+              
         self.manualFeatureSelectdDerivates = bandL
             
         derviationBandDF = self.spectraDF[ bandL  ]
@@ -717,16 +817,16 @@ class RegressionModels:
         #self.globalFeatureSelectedD['scaler'] = self.globalFeatureSelection.scaler
         self.globalFeatureSelectedD['nCovariatesRemoved'] = len(discardL)
          
-        self.varianceSelecttxt = '%s covariates removed with %s' %(len(discardL),'VarianceThreshold')
+        varianceSelectTxt = '%s covariates removed with %s' %(len(discardL),'VarianceThreshold')
+        
+        self.varianceSelectTxt = '%s: %s' %('VarianceThreshold',len(discardL))
  
         if self.verbose:
             
-            print ('            ',self.varianceSelecttxt)
+            print ('            ',varianceSelectTxt)
             
             if self.verbose > 1: 
 
-            
-                print ('            ')
                 #print the selected features and their variance
                 print ('            Discarded features [name, (variance):')
                     
@@ -762,7 +862,7 @@ class RegressionModels:
             
                 if self.verbose:
                     
-                    infostr = '    SelectKBest: Number of features (%s) less than or equal to n_features (%s).' %(nfeatures,n_features)
+                    infostr = '            SelectKBest: Number of features (%s) less than or equal to n_features (%s).' %(nfeatures,n_features)
                 
                     print (infostr)
                     
@@ -783,16 +883,15 @@ class RegressionModels:
         
         self.X = pd.DataFrame(X, columns=self.columns) 
                 
-        
         self.targetFeatureSelectedD[self.targetFeature]['method'] ='SelectKBest'
         
         self.targetFeatureSelectedD[self.targetFeature]['nFeaturesRemoved'] = nfeatures-self.X.shape[1]
                         
-        self.targetFeatureSelectionTxt = '%s features removed with %s' %( nfeatures-self.X.shape[1] ,'SelectKBest')
+        self.targetFeatureSelectionTxt = '  %s removed %s' %( nfeatures-self.X.shape[1] ,'SelectKBest')
  
         if self.verbose:
             
-            print ('            targetFeatureSelection:')
+            print ('\n            targetFeatureSelection:')
 
             print ('                ',self.targetFeatureSelectionTxt)
             
@@ -812,7 +911,7 @@ class RegressionModels:
             
             if self.verbose:
                 
-                infostr = '    Number of features (%s) less than or equal to n_features_to_select (%s)' %(nfeatures,n_features_to_select)
+                infostr = '            Number of features (%s) less than or equal to n_features_to_select (%s)' %(nfeatures,n_features_to_select)
             
                 print (infostr)
                 
@@ -843,11 +942,11 @@ class RegressionModels:
         
         self.modelFeatureSelectedD[self.targetFeature][name]['nFeaturesRemoved'] = nfeatures - self.X.shape[1]
                         
-        self.modelFeatureSelectionTxt = '%s features removed with %s' %( nfeatures - self.X.shape[1], 'PermutationSelector')
+        self.modelFeatureSelectionTxt = '%s feat´s removed w. %s' %( nfeatures - self.X.shape[1], 'PermutationSelector')
  
         if self.verbose:
             
-            print ('            modelFeatureSeelction:')
+            print ('\n            modelFeatureSeelction:')
 
             print ('                Regressor: %(m)s; Target feature: %(t)s' %{'m':name,'t':self.targetFeature})
 
@@ -871,7 +970,7 @@ class RegressionModels:
             
             if self.verbose:
                 
-                infostr = '    Number of features (%s) less than or equal to n_features_to_select (%s)' %(nfeatures,n_features_to_select)
+                infostr = '            Number of features (%s) less than or equal to n_features_to_select (%s)' %(nfeatures,n_features_to_select)
             
                 print (infostr)
                 
@@ -925,11 +1024,11 @@ class RegressionModels:
         
         self.modelFeatureSelectedD[self.targetFeature][name]['nFeaturesRemoved'] = len( discardL)
                         
-        self.modelFeatureSelectionTxt = '%s features removed with %s' %(len(discardL),'RFE')
+        self.modelFeatureSelectionTxt = '%s feat´s removed w. %s' %(len(discardL),'RFE')
  
         if self.verbose:
             
-            print ('            modelFeatureSeelction:')
+            print ('\n            modelFeatureSeelction:')
 
             print ('                Regressor: %(m)s; Target feature: %(t)s' %{'m':name,'t':self.targetFeature})
 
@@ -1000,11 +1099,13 @@ class RegressionModels:
         self.outliersRemovedD['method'] = self.removeOutliers.detector
         self.outliersRemovedD['nOutliersRemoved'] = self.nOutliers
                 
-        self.outliertxt = '%s outliers removed with %s' %(self.nOutliers,self.removeOutliers.detector)
+        self.outlierTxt = '%s outliers removed w. %s' %(self.nOutliers,self.removeOutliers.detector)
+        
+        outlierTxt = '%s outliers removed' %(self.nOutliers)
  
         if self.verbose:
             
-            print ('        ',self.outliertxt)
+            print ('        ',outlierTxt)
                     
     def _WardClustering(self, n_clusters):
         '''
@@ -1048,13 +1149,14 @@ class RegressionModels:
                                     
         self.agglomeratedFeaturesD['tuneWardClusteringApplied'] = self.featureAgglomeration.wardClustering.tuneWardClustering.apply
                     
-        self.agglomeratetxt = '%s input features clustered to %s covariates using  %s' %(len(self.columns),len(self.aggColumnL),self.agglomeratedFeaturesD['method'])
+        agglomeratetxt = '%s input features clustered to %s covariates using  %s' %(len(self.columns),len(self.aggColumnL),self.agglomeratedFeaturesD['method'])
  
+        self.agglomerateTxt = '%s clustered from %s to %s Feat´s' %(self.agglomeratedFeaturesD['method'], len(self.columns),len(self.aggColumnL))
+
         if self.verbose:
             
-            print ('\n                ',self.agglomeratetxt)
+            print ('\n                ',agglomeratetxt)
             
-           
             if self.verbose > 1:  
                 
                 print ('                Clusters:')
@@ -1307,14 +1409,14 @@ class RegressionModels:
         '''
         '''
         
-        print ('    Model hyper-parameters:')
+        print ('            Model hyper-parameters:')
         
         for model in self.regressorModels:
             
             #Retrieve the model name and the model itself
             modelname,modelhyperparams = model
             
-            print ('        name', modelname, modelhyperparams.get_params()) 
+            print ('                name', modelname, modelhyperparams.get_params()) 
 
     def _ReportSearch(self, results, n_top=3):
         '''
@@ -1376,7 +1478,7 @@ class MachineLearningModel(Obj, RegressionModels):
         self.params = deepcopy(self)
         
         # Drop the plot and figure settings from paramD
-        paramD.pop('plot'); paramD.pop('figure')
+        paramD.pop('plot')
                 
         # Deep copy the parameters to self.soillineD
         self.plotD = deepcopy(paramD)
@@ -1496,7 +1598,10 @@ class MachineLearningModel(Obj, RegressionModels):
     def _GetBandData(self):
         ''' Read json data into numpy array and convert to pandas dataframe
         '''
-                        
+        self.varianceSelectTxt = None; self.outlierTxt = None
+        self.targetFeatureSelectionTxt = None; self.agglomerateTxt = None
+        self.modelFeatureSelectionTxt = None
+                     
         # Use the wavelength as column headers
         self.columns = self.jsonSpectraData['waveLength']
         
@@ -1539,7 +1644,176 @@ class MachineLearningModel(Obj, RegressionModels):
                 self.columns = derivativeColumns
 
         self.originalColumns = self.columns
+    
+    def _SetSubPlots(self):
+        '''
+        '''
         
+        #regressionModelTitleTranslateD = {'permutationImportance': 'Permutation importance', 'Kfold': 'Kfold model','trainTest': 'train/test model'}
+        
+        #targetFeatureTitleTranslateD = {'permutationImportance': 'Permutation importance', 'Kfold': 'Kfold model','trainTest': 'train/test model'}
+   
+        if self.plot.rows.apply:
+            
+            self.nRegrModels = len(self.regressorModels)
+            
+            self.nTargetFeatures = len(self.targetFeatures)
+            
+            self.columnFig = {}
+                
+            self.columnAxs = {}
+                  
+            if self.plot.rows.targetFeatures.apply: 
+                
+                self.targetFeaturePlotColumnD = {}
+            
+                for c, col in enumerate(self.plot.rows.targetFeatures.columns):
+                
+                    self.targetFeaturePlotColumnD[col] = c 
+                
+                self.targetFeaturesFigCols = len(self.plot.rows.targetFeatures.columns)
+                
+                # Set the figure size
+                if self.plot.rows.targetFeatures.figSize.x == 0:
+                    
+                    figSizeX = self.plot.rows.subFigSize.x * self.targetFeaturesFigCols + self.plot.rows.subFigSize.xadd
+                    
+                else:
+                    
+                    figSizeX = self.plot.rows.targetFeatures.figSize.x
+                    
+                if self.plot.rows.targetFeatures.figSize.y == 0:
+                    
+                    figSizeY = self.plot.rows.subFigSize.y * self.nTargetFeatures + self.plot.rows.subFigSize.yadd
+     
+                else:
+                    
+                    figSizeY = self.plot.rows.targetFeatures.figSize.y
+                          
+                # Create column plots for individual targetFeatures, with rows showing different regressors
+                for regrModel in self.regressorModels:
+
+                    self.columnFig[regrModel[0]], self.columnAxs[regrModel[0]] = plt.subplots( self.nTargetFeatures, self.targetFeaturesFigCols, figsize=(figSizeX, figSizeY) )
+
+                    # Set title 
+                    suptitle = "Regressor: %s, %s (rows=target features)\n" %(regrModel[0], self.hyperParamtxt)
+                                                                        
+                    suptitle += '%s input features' %(len(self.originalColumns))
+                        
+                    # Set subplot wspace and hspace
+                    self.columnFig[regrModel[0]].subplots_adjust(wspace=0.25)
+                    
+                    self.columnFig[regrModel[0]].subplots_adjust(hspace=0.25)
+
+                    if self.varianceSelectTxt != None:
+                        
+                        suptitle += ', %s' %(self.varianceSelectTxt)
+                        
+                    if self.outlierTxt != None:
+                        
+                        suptitle +=  ', %s' %(self.outlierTxt)
+                                                                                                                          
+                    self.columnFig[regrModel[0]].suptitle(  suptitle )
+                    
+                    for r,rows in enumerate(self.targetFeatures):
+                    
+                        for c,cols in enumerate(self.plot.rows.targetFeatures.columns):
+                            
+                            # Set subplot titles:
+                            if 'Importance' in cols:
+                                
+                                if r == 0:
+                                
+                                    title = '%s' %( cols.replace('Importance', ' Importance'))
+                                    
+                                    self.columnAxs[ regrModel[0] ][r,c].set_title(title)
+                            
+                            else:
+                                
+                                title = '%s %s' %( self.paramD['targetFeatureSymbols'][rows]['label'], cols)
+                            
+                                self.columnAxs[ regrModel[0] ][r,c].set_title(title)
+                                  
+            if self.plot.rows.regressionModels.apply:
+                  
+                self.regressionModelPlotColumnD = {}
+                
+                for c, col in enumerate(self.plot.rows.regressionModels.columns):
+                    
+                    self.regressionModelPlotColumnD[col] = c 
+                    
+                self.regressionModelFigCols = len(self.plot.rows.regressionModels.columns)
+                
+                # Set the figure size
+                if self.plot.rows.regressionModels.figSize.x == 0:
+                    
+                    figSizeX = self.plot.rows.subFigSize.x * self.regressionModelFigCols + self.plot.rows.subFigSize.xadd
+                    
+                else:
+                    
+                    figSizeX = self.plot.rows.regressionModels.figSize.x
+                    
+                if self.plot.rows.regressionModels.figSize.y == 0:
+                    
+                    figSizeY = self.plot.rows.subFigSize.y * self.nRegrModels + self.plot.rows.subFigSize.yadd
+                    
+                else:
+                    
+                    figSizeY = self.plot.rows.regressionModels.figSize.x
+                    
+                # Create column plots for individual regressionModels, with rows showing different regressors
+                for targetFeature in self.targetFeatures:
+                    
+                    self.columnFig[targetFeature], self.columnAxs[targetFeature] = plt.subplots( self.nRegrModels, self.regressionModelFigCols, figsize=(figSizeX, figSizeY))
+                    
+                    # ERROR If only one regressionModle then r == NONE
+                    
+                    # Set subplot wspace and hspace
+                    self.columnFig[targetFeature].subplots_adjust(wspace=0.25)
+                    
+                    self.columnFig[targetFeature].subplots_adjust(hspace=0.25)
+                    
+                    label = self.paramD['targetFeatureSymbols'][targetFeature]['label']
+                    
+                    suptitle = "Target: %s, %s (rows=regressors)\n" %(label, self.hyperParamtxt ) 
+                                        
+                    suptitle += '%s input features' %(len(self.originalColumns))
+                        
+                    if self.varianceSelectTxt != None:
+                        
+                        suptitle += ', %s' %(self.varianceSelectTxt)
+                        
+                    if self.outlierTxt != None:
+                        
+                        suptitle +=  ', %s' %(self.outlierTxt)
+                        
+                    # Set suotitle
+                    self.columnFig[targetFeature].suptitle( suptitle )
+                    
+                    # Set subplot titles:   
+                    for r,rows in enumerate(self.regressorModels):
+                        
+                        for c,cols in enumerate(self.plot.rows.regressionModels.columns):
+                            
+                            #title = '%s %s' %(rows[0], cols)
+                            
+                            # Set subplot titles:
+                            if 'Importance' in cols:
+                                
+                                if r == 0:
+                                
+                                    title = '%s' %( cols.replace('Importance', ' Importance'))
+                                    self.columnAxs[targetFeature][r,c].set_title( title )
+    
+                            else:
+                                
+                                title = '%s %s' %(rows[0], cols)
+                                #title = '%s ' %( self.paramD['targetFeatureSymbols'][rows]['label'], cols)
+                                
+                                self.columnAxs[targetFeature][r,c].set_title( title )
+                            
+                            #regressionModelTitleTranslateD = {'permutationImportance': 'Permutation importance', 'Kfold': 'Kfold model','trainTest': 'train/test model'}
+                    
     def _SetDstFPNs(self):
         ''' Set destination file paths and names
         '''
@@ -1550,8 +1824,6 @@ class MachineLearningModel(Obj, RegressionModels):
         
         #self.name = FN.split('_', 1)[1]
         
-        
-            
         modelFP = os.path.join(FP,'mlmodel')
         
         if not os.path.exists(modelFP):
@@ -1581,19 +1853,28 @@ class MachineLearningModel(Obj, RegressionModels):
         if not os.path.exists(modelimageFP):
             
             os.makedirs(modelimageFP)
-                 
-        regrJsonFN = '%s_results.json' %(self.name)
+            
+        # if prefix is given it will be added to all output files
+        if len(self.output.prefix) > 0 and self.output.prefix[len(self.output.prefix)-1] != '_':
+        
+            prefix = '%s_' %(self.output.prefix)
+            
+        else:
+            
+            prefix = self.output.prefix   
+            
+        regrJsonFN = '%s%s_results.json' %(prefix, self.name)
 
         self.regrJsonFPN = os.path.join(modelresultFP,regrJsonFN)
         
-        paramJsonFN = '%s_params.json' %(self.name)
+        paramJsonFN = '%s%s_params.json' %(prefix,self.name)
 
         self.paramJsonFPN = os.path.join(modelresultFP,paramJsonFN)
         
         self.imageFPND = {}
         
         # the picke files save the regressor models for later use
-        self.traintestPickleFPND = {}
+        self.trainTestPickleFPND = {}
         
         self.KfoldPickleFPND = {}
         
@@ -1602,15 +1883,15 @@ class MachineLearningModel(Obj, RegressionModels):
             
             self.imageFPND[targetFeature] = {}
             
-            self.traintestPickleFPND[targetFeature] = {}; self.KfoldPickleFPND[targetFeature] = {}
+            self.trainTestPickleFPND[targetFeature] = {}; self.KfoldPickleFPND[targetFeature] = {}
                                
             for regmodel in self.paramD['regressionModels']:
                 
-                trainTestPickleFN = '%s_%s_%s_traintest.xsp'    %('modelid',targetFeature, regmodel)
+                trainTestPickleFN = '%s%s_%s_%s_trainTest.xsp'    %(prefix,'modelid',targetFeature, regmodel)
                 
-                KfoldPickleFN = '%s_%s_%s_Kfold.xsp'    %('modelid',targetFeature, regmodel)
+                KfoldPickleFN = '%s%s_%s_%s_Kfold.xsp'    %(prefix,'modelid',targetFeature, regmodel)
 
-                self.traintestPickleFPND[targetFeature][regmodel] = os.path.join(pickleFP, trainTestPickleFN)
+                self.trainTestPickleFPND[targetFeature][regmodel] = os.path.join(pickleFP, trainTestPickleFN)
                 
                 self.KfoldPickleFPND[targetFeature][regmodel] = os.path.join(pickleFP, KfoldPickleFN)
                 
@@ -1620,26 +1901,41 @@ class MachineLearningModel(Obj, RegressionModels):
                 
                     self.imageFPND[targetFeature][regmodel]['featureImportance'] = {}
                     
-                    imgFN = '%s_%s-model_permut-imp.png'    %(targetFeature, regmodel)
+                    imgFN = '%s%s_%s-model_permut-imp.png'    %(prefix,targetFeature, regmodel)
                     
                     self.imageFPND[targetFeature][regmodel]['featureImportance']['permutationImportance'] = os.path.join(modelimageFP, imgFN)
                     
-                    imgFN = '%s_%s-model_feat-imp.png'    %(targetFeature, regmodel)
+                    imgFN = '%s%s_%s-model_feat-imp.png'    %(prefix,targetFeature, regmodel)
                     
                     self.imageFPND[targetFeature][regmodel]['featureImportance']['regressionImportance'] = os.path.join(modelimageFP, imgFN)
                 
                 if self.modelTests.trainTest.apply:
                     
-                    imgFN = '%s_%s-model_tt-result.png'    %(targetFeature, regmodel)
+                    imgFN = '%s%s_%s-model_tt-result.png'    %(prefix,targetFeature, regmodel)
                     
-                    self.imageFPND[targetFeature][regmodel]['traintest'] = os.path.join(modelimageFP, imgFN)
+                    self.imageFPND[targetFeature][regmodel]['trainTest'] = os.path.join(modelimageFP, imgFN)
                     
                 if self.modelTests.Kfold.apply:
                     
-                    imgFN = '%s_%s-model_kfold-result.png'    %(targetFeature, regmodel)
+                    imgFN = '%s%s_%s-model_kfold-result.png'    %(prefix,targetFeature, regmodel)
                     
                     self.imageFPND[targetFeature][regmodel]['Kfold'] = os.path.join(modelimageFP, imgFN)
     
+            # Set multi row-image file names, per targetfeature
+            imgFN = '%s%s-multi-results.png'    %(prefix, targetFeature)
+                    
+            self.imageFPND[targetFeature]['allmodels'] = os.path.join(modelimageFP, imgFN)
+        
+        for regmodel in self.paramD['regressionModels']:
+            
+            self.imageFPND[regmodel] = {}
+            
+            # Set multi row-image file names, per regression model
+            imgFN = '%s%s-multi-results.png'    %(prefix, regmodel)
+                    
+            self.imageFPND[regmodel]['alltargets'] = os.path.join(modelimageFP, imgFN)
+
+            
     def _DumpJson(self):
         '''
         '''
@@ -1699,21 +1995,20 @@ class MachineLearningModel(Obj, RegressionModels):
         resultD['appliedModelingFeatures'] = self.finalFeatureLD
          
         # Add the final model results  
-        
         if self.modelTests.apply:
             
             resultD['modelResults'] = {}
         
             if self.modelTests.trainTest.apply:
             
-                resultD['modelResults']['traintest'] = self.trainTestResultD
+                resultD['modelResults']['trainTest'] = self.trainTestResultD
                 
             if self.modelTests.Kfold.apply:
             
                 resultD['modelResults']['Kfold'] = self.KfoldResultD
                 
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(resultD)
+        #pp = pprint.PrettyPrinter(indent=2)
+        #pp.pprint(resultD)
         
         jsonF = open(self.regrJsonFPN, "w")
   
@@ -1723,117 +2018,6 @@ class MachineLearningModel(Obj, RegressionModels):
   
         json.dump(self.paramD, jsonF, indent = 2)
                                 
-    def _PlotSingle(self, X, Y, regr, xlabel, ylabel, title, i):
-        ''' Regression and plot for single band
-        
-        '''
-        
-        xlabel='%s reflectance' %(xlabel); ylabel='%s reflectance' %(ylabel)
-        
-        fig, ax = plt.subplots( figsize=(self.plot.figSize.x, self.plot.figSize.y) )
-        
-        ax.scatter(X, Y, size=self.plot.scatter.size, color=self.slicedCM[i])
-        
-        ax.plot(X, regr.predict(X), color=self.slicedCM[i])
-        
-        ax.set_xlim(self.xylimD['xmin'], self.xylimD['xmax'])
-                
-        ax.set_ylim(self.xylimD['ymin'], self.xylimD['ymax'])
-        
-        ax.set(xlabel=xlabel, ylabel=ylabel,
-                   title=title)
-        
-        plt.show()
-        
-    def _PlotMulti(self,plot, figure, pngFPN):
-        ''' Regression and plot for multiple bands
-        
-            :param str xlabel: x-axis label
-            
-            :param str ylabel: y-axis label
-            
-            :param str title: title
-            
-            :param str text: text
-            
-            :param bool plot: interactive plot or not
-            
-            :param bool figure: save as file or not
-            
-            :param str pngFPN: path for saving file
-            
-            :returns: regression results
-            :rtype: dict
-        '''
-
-        # Get the bands to plot
-                
-        plotskipstep = ceil( (len(self.spectraDF.index)-1)/self.plot.maxspectra )
-                
-        # Set the plot title, labels and annotation
-        titleSuffix = ''
-        
-        xLabel, yLabel, title, text = self._PlotTitleTextn(titleSuffix,plotskipstep)
-
-                       
-        fig, ax = plt.subplots( figsize=(self.plot.figSize.x, self.plot.figSize.y)  )
-        
-        if self.plot.tight_layout:
-            
-            fig.tight_layout()
-
-        n = int(len(self.spectraDF.index)/plotskipstep)+1
-        
-        # With n bands known, create the colorRamp
-        self._SetColorRamp(n)
-        
-        # Loop over the spectra
-        i = -1
-        n = 0
-        for index, row in self.spectraDF.iterrows():
-            i += 1
-            if i % plotskipstep == 0:
-                
-                ax.plot(self.columns, row, color=self.slicedCM[n])
-                
-                n += 1
-                     
-        if not self.xylimD:
-            
-            xmin,xmax = ax.get_xlim()
-            
-            ymin,ymax = ax.get_ylim()
-            
-            self.xylimD = {'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax}
-            
-        else:
-            
-            ax.set_xlim(self.xylimD['xmin'], self.xylimD['xmax'])
-            
-            ax.set_ylim(self.xylimD['ymin'], self.xylimD['ymax'])
-        
-        ax.set(xlabel=xLabel, ylabel=yLabel, title=title)
-        
-        if self.plot.legend:
-                    
-            ax.legend(loc=self.plot.legend)
-        
-        if text != None:
-            
-            x,y = self._SetTextPos(self.xylimD['xmin'], self.xylimD['xmax'], self.xylimD['ymin'], self.xylimD['ymax'])
-            
-            ax.text(x, y, text)
-                                        
-        if plot:
-        
-            plt.show()
-          
-        if figure:
-          
-            fig.savefig(pngFPN)   # save the figure to file
-            
-            plt.close(fig)
-
     def _PlotTitleTextn(self, titleSuffix,plotskipstep):
         ''' Set plot title and annotation
         
@@ -1887,8 +2071,7 @@ class MachineLearningModel(Obj, RegressionModels):
         # Get and add the abundance data
         self._GetAbundanceData()
         
-        # Set the regressor models to apply
-        self._RegModelSelectSet()
+        self.hyperParamtxt = "hyper-param tuning: None"
              
         if self.hyperParameterTuning.apply:
                         
@@ -1898,11 +2081,15 @@ class MachineLearningModel(Obj, RegressionModels):
                 
                 self.tuningParamD = ReadModelJson(self.input.hyperParameterExhaustiveTuning)
                 
+                self.hyperParamtxt = "hyper-param tuning: grid search"
+                
             elif self.hyperParameterTuning.randomTuning.apply:
                 
                 hyperParameterTuning = 'RandomTuning'
                 
                 self.tuningParamD = ReadModelJson(self.input.hyperParameterRandomTuning)
+                
+                self.hyperParamtxt = "hyper-param tuning: random"
                 
             else:
                 
@@ -1931,7 +2118,6 @@ class MachineLearningModel(Obj, RegressionModels):
                 
                 if self.paramD['regressionModels'][regModel]['apply']:
 
-                
                     self.trainTestResultD[targetFeature][regModel] = {}
                     self.KfoldResultD[targetFeature][regModel] = {}
                     self.modelFeatureSelectedD[targetFeature][regModel] = {}
@@ -1941,9 +2127,7 @@ class MachineLearningModel(Obj, RegressionModels):
                     if self.paramD['hyperParameterTuning']['apply'] and self.tuningParamD[hyperParameterTuning][regModel]['apply']:
                         
                         self.tunedHyperParamsD[targetFeature][regModel] = {}
-                                        
-        #self.omitL = []
-        
+
         # RemoveOutliers is applied to the full dataset and affects all models
         if self.removeOutliers.apply:
                 
@@ -1959,12 +2143,15 @@ class MachineLearningModel(Obj, RegressionModels):
             
             self._VarianceSelector()
             
+        # Set the subplot
+        self._SetSubPlots()
+            
         # Loop over the target features to model 
-        for self.targetFeature in self.targetFeatures:
+        for self.targetN, self.targetFeature in enumerate(self.targetFeatures):
             
             if self.verbose:
                 
-                infoStr = '            Target feature: %s' %(self.targetFeature)
+                infoStr = '\n            Target feature: %s' %(self.targetFeature)
                 
                 print (infoStr)
                         
@@ -1995,7 +2182,9 @@ class MachineLearningModel(Obj, RegressionModels):
             # End of target feature related selection and clustering
             
             #Loop over the defined models
-            for self.regrModel in self.regressorModels:
+            for self.regrN, self.regrModel in enumerate(self.regressorModels):
+                
+                print (self.regrN, self.regrModel[0])
                 
                 if  self.modelFeatureSelection.apply:
                     
@@ -2048,6 +2237,27 @@ class MachineLearningModel(Obj, RegressionModels):
                     if self.modelTests.Kfold.apply:
                     
                         self._RegrModKFold()
+                    
+        plt.show()
+        
+        if self.plot.rows.savePng:
+            
+            if self.plot.rows.targetFeatures.apply:
+   
+                for regModel in self.paramD['regressionModels']:
+                    
+                    if self.paramD['regressionModels'][regModel]['apply']:
+                                                                    
+                        self.columnFig[regModel].savefig(self.imageFPND[regModel]['alltargets'])  
+             
+            if self.plot.rows.regressionModels.apply:
+                   
+                for targetFeature in self.targetFeatures:
+                                                
+                    self.columnFig[targetFeature].savefig(self.imageFPND[targetFeature]['allmodels'])  
+
+        
+        print (self.imageFPND[targetFeature]['allmodels'])
         
         self._DumpJson()
                 
@@ -2087,10 +2297,14 @@ def SetupProcesses(docpath, createjsonparams, arrangeddatafolder, projFN, jsonpa
         
         # Add the raw paramD as a variable to mlModel
         mlModel.jsonparamsD = paramD
+        
+        
+        # Set the regressor models to apply
+        mlModel._RegModelSelectSet()
 
         # Set the dst file names
         mlModel._SetDstFPNs()
-
+        
         # run the modeling
         mlModel._PilotModeling()
                               
