@@ -45,22 +45,20 @@ The module plot.py:
 '''
 
 # Standard library imports
-import sys 
 
 import os
 
-import json
-
-import datetime
-
 from copy import deepcopy
 
-# import pprint
-
-import csv
+#from math import ceil
 
 # Third party imports
+
+#import pprint
+
 import tempfile
+
+import json
 
 import numpy as np
 
@@ -107,730 +105,15 @@ from sklearn.feature_selection import SelectFromModel
 
 from sklearn.inspection import permutation_importance
 
-def Today():
-    
-    return datetime.datetime.now().date().strftime("%Y%m%d")
+# Package application imports
 
-def ReadCSV(FPN):
-    ''' Standard reader for all OSSL csv data files
-    
-    :param FPN: path to csv file
-    :type FPN: str
-    
-    :return headers: list of columns
-    :rtype: list
-    
-    :return rowL: array of data
-    :rtype: list of list
-    '''
+from util.makeObject import Obj
 
-    rowL = []
-    
-    with open( FPN, 'r' ) as csvF:
-                    
-        reader = csv.reader(csvF)
-        
-        headers = next(reader, None)
+from util.jsonIO import ReadAnyJson, LoadBandData
 
-        for row in reader:
-            
-            rowL.append(row)
-            
-    return headers, rowL
+from util.defaultParams import SoilLineExtractParams, CheckMakeDocPaths, CreateArrangeParamJson, ReadProjectFile
 
-def DumpAnyJson(dumpD, jsonFPN):
-    ''' dump, any json object
-    
-    :param exportD: formatted dictionary
-    :type exportD: dict
-    '''
-            
-    jsonF = open(jsonFPN, "w")
-  
-    json.dump(dumpD, jsonF, indent = 2)
-  
-    jsonF.close()
-
-def ReadAnyJson(jsonFPN):
-    """ Read json parameter file
-    
-    :param jsonFPN: path to json file
-    :type jsonFPN: str
-    
-    :return paramD: parameters
-    :rtype: dict
-   """
-    
-    with open(jsonFPN) as jsonF:
-    
-        jsonD = json.load(jsonF)
-        
-    return (jsonD)
-
-def CampaignParams():
-    """ Default campaign parameters for all OSSL processing
-    
-        :returns: parameter dictionary
-        
-        :rtype: dict
-    """
-    
-    campaignD = {'campaignId': 'OSSL-region-etc','campaignShortId':'OSSL-xyz'}
-    
-    campaignD['campaignType'] = 'laboratory'
-    
-    campaignD['theme'] = 'soil'
-    
-    campaignD['product'] = 'diffuse reflectance'
-    
-    campaignD['units'] = 'fraction'
-        
-    campaignD['geoRegion'] = "Sweden"
-    
-    return campaignD
-    
-def StandardParams(): 
-    """ Default standard parameters for all OSSL processing
-    
-        :returns: parameter dictionary
-        
-        :rtype: dict
-    """   
-    
-    paramD = {}
-    
-    paramD['verbose'] = 1
-    
-    paramD['id'] = "auto"
-    
-    paramD['name'] = "auto"
-    
-    paramD['userId'] = "youruserid - any for now"
-    
-    paramD['importVersion'] = "OSSL-202308"
-    
-    return paramD
-
-def StandardXspectreParams(): 
-    """ Default standard parameters for all OSSL processing
-    
-        :returns: parameter dictionary
-        
-        :rtype: dict
-    """   
-    
-    paramD = {}
-    
-    paramD['verbose'] = 1
-    
-    paramD['id'] = "auto"
-    
-    paramD['name'] = "auto"
-    
-    paramD['userId'] = "youruserid - any for now"
-    
-    paramD['importVersion'] = "importxspectrev080"
-    
-    return paramD
-
-def MLmodelParams():
-    ''' Default parameters for soilline extraction from soil spectral library data
-    
-        :returns: parameter dictionary
-        :rtype: dict
-    '''
-    
-    paramD = StandardParams()
-    
-    paramD['campaign'] = CampaignParams()
-    
-    paramD['input'] = {}
-    
-    paramD['input']['jsonSpectraDataFilePath'] = 'path/to/jsonfile/with/spectraldata.json'
-    
-    paramD['input']['jsonSpectraParamsFilePath'] = 'path/to/jsonfile/with/spectralparams.json'
-    
-    paramD['input']['hyperParameterRandomTuning'] = 'path/to/jsonfile/with/hyperparam/tuning.json'
-    
-    ''' LUCAS oriented targetFeatures data'''
-    paramD['targetFeatures'] = ['caco3_usda.a54_w.pct',
-      'cec_usda.a723_cmolc.kg',
-      'cf_usda.c236_w.pct',
-      'clay.tot_usda.a334_w.pct',
-      'ec_usda.a364_ds.m',
-      'k.ext_usda.a725_cmolc.kg',
-      'n.tot_usda.a623_w.pct',
-      'oc_usda.c729_w.pct',
-      'p.ext_usda.a274_mg.kg',
-      'ph.cacl2_usda.a481_index',
-      'ph.h2o_usda.a268_index',
-      'sand.tot_usda.c60_w.pct',
-      'silt.tot_usda.c62_w.pct']
-    
-    paramD['targetFeatureSymbols'] = {'caco3_usda.a54_w.pct':{'color': 'orange', 'size':50}}
-    
-    paramD['derivatives'] = {'apply':False, 'join':False}
-    
-    paramD['removeOutliers'] = {}
-    
-    paramD['removeOutliers']['comment'] = "removes sample outliers based on spectra only - globally applied as preprocess"
-    
-    paramD['removeOutliers']['apply'] = True
-    
-    paramD['removeOutliers']['detectorMethodList'] = ["iforest (isolationforest)",
-                                                      "ee (eenvelope,ellipticenvelope)",
-                                                      "lof (lofactor,localoutlierfactor)",
-                                                      "1csvm (1c-svm, oneclasssvm)"]
-    
-    paramD['removeOutliers']['detector'] = "1csvm"
-    
-    paramD['removeOutliers']['contamination'] = 0.1
-    
-    paramD['manualFeatureSelection'] = {}
-    
-    paramD['manualFeatureSelection']['comment'] = "Manual feature selection overrides other selection alternatives"
-   
-    paramD['manualFeatureSelection'] ['apply'] = False
-    
-    paramD['manualFeatureSelection']['spectra'] = [ "A", "B", "C"],
-    
-    paramD['manualFeatureSelection']['derivatives'] = {}
-    
-    paramD['manualFeatureSelection']['derivatives']['firstWaveLength'] = ['A','D']
-    
-    paramD['manualFeatureSelection']['derivatives']['lastWaveLength'] = ['C','F']
-    
-    paramD['globalFeatureSelection'] = {}
-    
-    paramD['globalFeatureSelection']['comment'] ="removes spectra with variance below given thresholds - globally applied as preprocess",
-    
-    paramD['globalFeatureSelection']['apply'] = False
-    
-    paramD['globalFeatureSelection']['varianceThreshold'] = {'threshold': 0.025}
-    
-    
-    paramD['modelFeatureSelection'] = {}
-    
-    paramD['modelFeatureSelection']['comment'] = 'feature selection using model data',
-    
-    paramD['modelFeatureSelection']['apply'] = False
-    
-    paramD['modelFeatureSelection']['univariateSelection'] = {}
-    
-    paramD['modelFeatureSelection']['univariateSelection']['apply'] = False
-    
-    paramD['modelFeatureSelection']['univariateSelection']['SelectKBest'] = {}
-    
-    paramD['modelFeatureSelection']['univariateSelection']['SelectKBest']['apply'] = False
-    
-    paramD['modelFeatureSelection']['univariateSelection']['SelectKBest']['n_features'] = 5
-    
-    
-    paramD['modelFeatureSelection']['univariateSelection']['SelectPercentile'] = {}
-    
-    paramD['modelFeatureSelection']['univariateSelection']['SelectPercentile']['implemented'] = False
-    
-    paramD['modelFeatureSelection']['univariateSelection']['SelectPercentile']['apply'] = False
-    
-    paramD['modelFeatureSelection']['univariateSelection']['SelectPercentile']['percentile'] = 10
-    
-
-    paramD['modelFeatureSelection']['univariateSelection']['genericUnivariateSelect'] = {}
-    
-    paramD['modelFeatureSelection']['univariateSelection']['genericUnivariateSelect']['implemented'] = False
-    
-    paramD['modelFeatureSelection']['univariateSelection']['genericUnivariateSelect']['apply'] = False
-    
-    paramD['modelFeatureSelection']['univariateSelection']['genericUnivariateSelect']['hyperParameters'] = {}
-    
-    
-    paramD['modelFeatureSelection']['RFE'] = {}
-    
-    paramD['modelFeatureSelection']['RFE']['apply'] = True
-    
-    paramD['modelFeatureSelection']['RFE']['CV'] = True
-    
-    paramD['modelFeatureSelection']['RFE']['n_features_to_select'] = 5
-    
-    paramD['modelFeatureSelection']['RFE']['step'] = 1
-    
-    
-    paramD['featureAgglomeration'] = {}
-    
-    paramD['featureAgglomeration']['apply'] = False
-    
-    paramD['featureAgglomeration']['agglomerativeClustering'] = {}
-    
-    paramD['featureAgglomeration']['agglomerativeClustering']['apply'] = False 
-    
-    paramD['featureAgglomeration']['agglomerativeClustering']['implemented'] = False
-    
-    paramD['featureAgglomeration']['wardClustering'] = {}
-    
-    paramD['featureAgglomeration']['wardClustering']['apply'] = False 
-    
-    paramD['featureAgglomeration']['wardClustering']['n_cluster'] = 0
-    
-    paramD['featureAgglomeration']['wardClustering']['affinity'] = 'euclidean'
-    
-    paramD['featureAgglomeration']['wardClustering']['tuneWardClustering'] = {}
-    
-    paramD['featureAgglomeration']['wardClustering']['tuneWardClustering']['apply'] = False 
-    
-    paramD['featureAgglomeration']['wardClustering']['tuneWardClustering']['kfolds'] = 3 
-
-    paramD['featureAgglomeration']['wardClustering']['tuneWardClustering']['clusters'] = [2,
-            3,4,5,6,7,8,9,10,11,12]
-        
-    paramD['hyperParameterTuning'] = {}
-    
-    paramD['hyperParameterTuning']['apply'] = False
-                                       
-    paramD['hyperParameterTuning']['fraction'] = 0.5
-    
-    paramD['hyperParameterTuning']['nIterSearch'] = 6
-    
-    paramD['hyperParameterTuning']['n_top'] = 3
-    
-    paramD['hyperParameterTuning']['randomTuning'] = {}
-    
-    paramD['hyperParameterTuning']['randomTuning']['apply'] = False
-    
-    paramD['hyperParameterTuning']['exhaustiveTuning'] = {}
-    
-    paramD['hyperParameterTuning']['exhaustiveTuning']['apply'] = False
-    
-    paramD['featureImportance'] = {}
-    
-    paramD['featureImportance']['apply'] = True
-                                       
-    paramD['featureImportance']['reportMaxFeatures'] = 12
-    
-    paramD['featureImportance']['permutationRepeats'] = 10
-            
-    paramD['modelling'] = {}
-
-    paramD['modelling']['apply'] = True
-    
-    paramD['regressionModels'] = {}
-    
-    paramD['regressionModels']['OLS'] = {}
-    
-    paramD['regressionModels']['OLS']['apply'] = False
-    
-    paramD['regressionModels']['OLS']['hyperParams'] = {}
-    
-    paramD['regressionModels']['OLS']['hyperParams']['fit_intercept'] = False
-  
-    paramD['regressionModels']['TheilSen'] = {}
-    
-    paramD['regressionModels']['TheilSen']['apply'] = False
-    
-    paramD['regressionModels']['TheilSen']['hyperParams'] = {}
-
-    paramD['regressionModels']['Huber'] = {}
-    
-    paramD['regressionModels']['Huber']['apply'] = False
-    
-    paramD['regressionModels']['Huber']['hyperParams'] = {}
-    
-    paramD['regressionModels']['KnnRegr'] = {}
-    
-    paramD['regressionModels']['KnnRegr']['apply'] = False
-    
-    paramD['regressionModels']['KnnRegr']['hyperParams'] = {}
-    
-    paramD['regressionModels']['DecTreeRegr'] = {}
-    
-    paramD['regressionModels']['DecTreeRegr']['apply'] = False
-    
-    paramD['regressionModels']['DecTreeRegr']['hyperParams'] = {}
-    
-    paramD['regressionModels']['SVR'] = {}
-    
-    paramD['regressionModels']['SVR']['apply'] = False
-    
-    paramD['regressionModels']['SVR']['hyperParams'] = {}
-    
-    paramD['regressionModels']['SVR']['hyperParams']['kernel'] = 'linear'
-    
-    paramD['regressionModels']['SVR']['hyperParams']['C'] = 1.5
-    
-    paramD['regressionModels']['SVR']['hyperParams']['epsilon'] = 0.05
-    
-    paramD['regressionModels']['RandForRegr'] = {}
-    
-    paramD['regressionModels']['RandForRegr']['apply'] = False
-    
-    paramD['regressionModels']['RandForRegr']['hyperParams'] = {}
-    
-    paramD['regressionModels']['RandForRegr']['hyperParams']['n_estimators'] = 30
-    
-    
-    paramD['regressionModels']['MLP'] = {}
-    
-    paramD['regressionModels']['MLP']['apply'] = False
-    
-    paramD['regressionModels']['MLP']['hyperParams'] = {}
-    
-    paramD['regressionModels']['MLP']['hyperParams']['hidden_layer_sizes'] = [100,100]
-    
-    paramD['regressionModels']['MLP']['hyperParams']['max_iter'] = 200
-    
-    paramD['regressionModels']['MLP']['hyperParams']['tol'] = 0.001
-    
-    paramD['regressionModels']['MLP']['hyperParams']['epsilon'] = 1e-8
-    
-    paramD['modelTests'] = {}
-    
-    paramD['modelTests']['trainTest'] = {}
-    
-    paramD['modelTests']['trainTest']['apply'] = False
-    
-    paramD['modelTests']['trainTest']['testSize'] = 0.3
-    
-    paramD['modelTests']['trainTest']['plot'] = True
-
-    paramD['modelTests']['trainTest']['marker'] = 's'
-    
-    
-    paramD['modelTests']['Kfold'] = {}
-    
-    paramD['modelTests']['Kfold']['apply'] = False
-    
-    paramD['modelTests']['Kfold']['folds'] = 10
-    
-    paramD['modelTests']['Kfold']['plot'] = True
-
-    paramD['modelTests']['Kfold']['marker'] = '.'
-    
-       
-    paramD['plot'] = {}
-    
-    paramD['plot']['apply'] = True
-    
-    paramD['plot']['subPlots'] = {}
-    
-    paramD['plot']['subPlots']['singles'] = {}
-    
-    paramD['plot']['subPlots']['singles']['apply'] = True
-    
-    paramD['plot']['subPlots']['singles']['regressor'] = False
-    
-    paramD['plot']['subPlots']['singles']['targetFeature'] = False
-    
-    paramD['plot']['subPlots']['singles']['hyperParameters'] = False
-    
-    paramD['plot']['subPlots']['singles']['modelTests'] = False
-    
-    paramD['plot']['subPlots']['rows'] = {}
-    
-    paramD['plot']['subPlots']['rows']['apply'] = True
-    
-    paramD['plot']['subPlots']['rows']['regressor'] = False
-    
-    paramD['plot']['subPlots']['rows']['targetFeature'] = False
-    
-    paramD['plot']['subPlots']['rows']['hyperParameters'] = False
-    
-    paramD['plot']['subPlots']['rows']['modelTests'] = False
-    
-    paramD['plot']['subPlots']['columns'] = {}
-    
-    paramD['plot']['subPlots']['columns']['apply'] = True
-    
-    paramD['plot']['subPlots']['columns']['regressor'] = False
-    
-    paramD['plot']['subPlots']['columns']['targetFeature'] = False
-    
-    paramD['plot']['subPlots']['columns']['hyperParameters'] = False
-    
-    paramD['plot']['subPlots']['columns']['modelTests'] = False
-    
-    paramD['plot']['subPlots']['doubles'] = {}
-    
-    paramD['plot']['subPlots']['doubles']['apply'] = True
-    
-    paramD['plot']['subPlots']['doubles']['columns'] = "regressor, targetFeature, hyperParameters or modelTest"
-    
-    paramD['plot']['subPlots']['doubles']['rows'] = "regressor, targetFeature, hyperParameters or modelTest"
-    
-
-
-    
-    paramD['plot']['figSize'] = {'x':0,'y':0}
-    
-    paramD['plot']['legend'] = False
-    
-    paramD['plot']['tightLayout'] = False
-    
-    paramD['plot']['scatter'] = {'size':50}
-    
-    
-        
-    paramD['plot']['text'] = {'x':0.6,'y':0.2}
-    
-    paramD['plot']['text']['bandWidth'] = True
-    
-    paramD['plot']['text']['samples'] = True
-    
-    paramD['plot']['text']['text'] = ''
-    
-    paramD['figure'] = {} 
-    
-    paramD['figure']['apply'] = True
-    
-    
-    return (paramD) 
-
-def CreateArrangeParamJson(jsonFPN, projFN, processstep):
-    """ Create the default json parameters file structure, only to create template if lacking
-    
-        :param str dstrootFP: directory path 
-        
-        :param str jsonpath: subfolder under directory path 
-    """
-    
-    def ExitMsgMsg(flag):
-        
-        if flag:
-            
-            exitstr = 'json parameter file already exists: %s\n' %(jsonFPN)
-        
-        else:
-        
-            exitstr = 'json parameter file created: %s\n' %(jsonFPN)
-        
-        exitstr += ' Edit the json file for your project and rename it to reflect the commands.\n' 
-        
-        exitstr += ' Add the path of the edited file to your project file (%s).\n' %(projFN)
-        
-        exitstr += ' Then set createjsonparams to False in the main section and rerun script.'
-        
-        exit(exitstr)
-       
-    if processstep.lower() in ['model','mlmodel']:
-    
-        # Get the default import params
-        paramD = MLmodelParams()
-        
-        # Set the json FPN
-        jsonFPN = os.path.join(jsonFPN, 'template_model_ossl-spectra.json')
-        
-    if processstep.lower() in ['importxspectre','arrangexspectre']:
-    
-        pass
-        '''
-        # Get the default import params
-        paramD = ImportXspectreParams()
-        
-        # Set the json FPN
-        jsonFPN = os.path.join(jsonFP, 'template_import_xspectre-spectra.json')
-        
-        # Set the json FPN
-        jsonFPN = os.path.join(jsonFP, 'template_model_ossl-spectra.json')
-        '''
-    
-    if os.path.exists(jsonFPN):
-        
-        ExitMsgMsg(True)
-    
-    DumpAnyJson(paramD,jsonFPN)
-    
-    ExitMsgMsg(False)
-    
-def CheckMakeDocPaths(rootpath,arrangeddatafolder, jsonpath, sourcedatafolder=False):
-    """ Create the default json parameters file structure, only to create template if lacking
-    
-        :param str dstrootFP: directory path 
-        
-        :param str jsonpath: subfolder under directory path 
-    """
-
-    if not os.path.exists(rootpath):
-        
-        exitstr = "The rootpath does not exists: %s" %(rootpath)
-        
-        exit(exitstr)
-        
-    if sourcedatafolder:
-        
-        srcFP = os.path.join(os.path.dirname(__file__),rootpath,sourcedatafolder)
-            
-        if not os.path.exists(srcFP):
-            
-            exitstr = "The source data path to the original OSSL data does not exists:\n %s" %(srcFP)
-            
-            exit(exitstr)
-        
-    dstRootFP = os.path.join(os.path.dirname(__file__),rootpath,arrangeddatafolder)
-        
-    if not os.path.exists(dstRootFP):
-        
-        os.makedirs(dstRootFP)
-        
-    jsonFP = os.path.join(dstRootFP,jsonpath)
-    
-    if not os.path.exists(jsonFP):
-        
-        os.makedirs(jsonFP)
-        
-    return dstRootFP, jsonFP
-
-def ReadImportParamsJson(jsonFPN):
-    """ Read the parameters for importing OSSL data
-    
-    :param jsonFPN: path to json file
-    :type jsonFPN: str
-    
-    :return paramD: parameters
-    :rtype: dict
-   """
-            
-    return ReadAnyJson(jsonFPN)
-  
-def ReadProjectFile(dstRootFP,projFN, jsonFP):
-           
-    projFPN = os.path.join(dstRootFP,projFN)
-
-    if not os.path.exists(projFPN):
-
-        exitstr = 'EXITING, project file missing: %s.' %(projFPN)
-        
-        exit( exitstr )
-
-    infostr = 'Processing %s' %(projFPN)
-
-    print (infostr)
-    
-    # Open and read the text file linking to all json files defining the project
-    with open(projFPN) as f:
-
-        jsonL = f.readlines()
-
-    # Clean the list of json objects from comments and whithespace etc
-    jsonProcessObjectL = [os.path.join(jsonFP,x.strip())  for x in jsonL if len(x) > 10 and x[0] != '#']
-    
-    return jsonProcessObjectL
-  
-class Obj(object):
-    ''' Convert json parameters to class objects
-    '''
-    
-    def __init__(self, paramD):
-        ''' Convert input parameters from nested dict to nested class object
-        
-            :param dict paramD: parameters 
-        '''
-        for k, v in paramD.items():
-            if isinstance(k, (list, tuple)):
-                setattr(self, k, [Obj(x) if isinstance(x, dict) else x for x in v])
-            else:
-                setattr(self, k, Obj(v) if isinstance(v, dict) else v)
-       
-    def _SetArrangeDefautls(self):
-        ''' Set class object default data if missing
-        '''
-    
-        if not hasattr(self, 'sitedata'):
-            
-            setattr(self, 'sitedata', [])
-            
-        sitedataMinL = ["id.layer_local_c",
-                        "dataset.code_ascii_txt",
-                        "longitude.point_wgs84_dd",
-                        "latitude.point_wgs84_dd",
-                        "location.point.error_any_m",
-                        "layer.upper.depth_usda_cm",
-                        "layer.lower.depth_usda_cm",
-                        "id_vis","id_mir"]   
-        
-        for item in sitedataMinL:
-            
-            if not item in self.sitedata:
-                
-                self.sitedata.append(item)
-        '''       
-        self.visnirStep = int(self.input.visnirOutputBandWidth/ self.input.visnirInputBandWidth)
-        
-        self.mirStep = int(self.input.mirOutputBandWidth/ self.input.mirInputBandWidth)
-        
-        self.neonStep = int(self.input.neonOutputBandWidth/ self.input.neonInputBandWidth)
-        '''
-
-    def _SetPlotDefaults(self):
-        ''' Set class object default data if required
-        '''
-
-        if self.plot.singles.figSize.x == 0:
-            
-            self.plot.singles.figSize.x = 8
-            
-        if self.plot.singles.figSize.y == 0:
-            
-            self.plot.singles.figSize.y = 6
-                         
-    def _SetPlotTextPos(self, plot, xmin, xmax, ymin, ymax):
-        ''' Set position of text objects for matplotlib
-        
-            :param float xmin: x-axis minimum
-            
-            :param float xmax: x-axis maximum
-            
-            :param float ymin: y-axis minimum
-            
-            :param float ymax: y-axis maximum
-            
-            :returns: text x position
-            :rtype: float
-            
-            :returns: text y position
-            :rtype: float 
-        '''
-        
-        x = plot.text.x*(xmax-xmin)+xmin
-        
-        y = plot.text.y*(ymax-ymin)+ymin
-        
-        return (x,y)
-    
-    def _SetSoilLineDefautls(self):
-        ''' Set class object default data if required
-        '''
-        
-        if self.plot.singles.figSize.x == 0:
-            
-            self.plot.singles.figSize.x = 8
-            
-        if self.plot.singles.figSize.y == 0:
-            
-            self.plot.singles.figSize.y = 6
-
-    def _SetModelDefaults(self):
-        ''' Set class object default data if required
-        '''
-        
-        if self.plot.singles.figSize.x == 0:
-            
-            self.plot.singles.figSize.x = 4
-            
-        if self.plot.singles.figSize.y == 0:
-            
-            self.plot.singles.figSize.y = 4
-            
-        # Check if Manual feature selection is set
-        if self.manualFeatureSelection.apply:
-            
-            # Turn off the derivates alteratnive (done as part of the manual selection if requested)
-            self.derivatives.apply = False
-            
-            # Turn off all other feature selection/agglomeration options
-            self.globalFeatureSelection.apply = False
-            
-            self.modelFeatureSelection.apply = False
-            
-            self.featureAgglomeration.apply = False
-
+from util.plot import SetTextPos
     
 def ReadModelJson(jsonFPN):
     """ Read the parameters for modeling
@@ -1796,7 +1079,7 @@ class RegressionModels:
         yhat = outlierDetector.fit_predict(X)
         
         # select all rows that are not outliers
-        #mask = yhat != -1
+        mask = yhat != -1
                 
         X['yhat'] = yhat
         
@@ -3018,38 +2301,29 @@ class MachineLearningModel(Obj, RegressionModels):
         print (self.imageFPND[targetFeature]['allmodels'])
         
         self._DumpJson()
-                        
-def SetupProcesses(iniParams):
+                
+def SetupProcesses(docpath, createjsonparams, arrangeddatafolder, projFN, jsonpath):
     '''Setup and loop processes
     
-    :param rootpath: path to project root folder 
-    :type: lstr
-    
-    :param sourcedatafolder: folder name of original OSSL data (source folder)  
-    :type: lstr
-    
-    :param arrangeddatafolder: folder name of arranged OSSL data (destination folder) 
+    :paramn docpath: path to text file 
     :type: lstr
             
-    :param projFN: project filename (in destination folder)
-    :type: str
+    :param projFN: project filename
+    :rtype: str
     
-    :param jsonpath: folder name
+    :param jsonpath: path to directory
     :type: str
             
     '''
-        
-    dstRootFP, jsonFP = CheckMakeDocPaths(iniParams['rootpath'],
-                                          iniParams['arrangeddatafolder'], 
-                                          iniParams['jsonpath'], 
-                                          iniParams['sourcedatafolder'])
     
-    if iniParams['createjsonparams']:
+    dstRootFP, jsonFP = CheckMakeDocPaths(docpath, arrangeddatafolder, jsonpath)
+    
+    if createjsonparams:
         
-        CreateArrangeParamJson(jsonFP,iniParams['projFN'],'mlmodel')
+        CreateArrangeParamJson(jsonFP, projFN, 'mlmodel')
         
-    jsonProcessObjectL = ReadProjectFile(dstRootFP, iniParams['projFN'], jsonFP)
-                   
+    jsonProcessObjectL = ReadProjectFile(dstRootFP, projFN, jsonFP)
+           
     #Loop over all json files 
     for jsonObj in jsonProcessObjectL:
                 
@@ -3077,27 +2351,7 @@ def SetupProcesses(iniParams):
 if __name__ == '__main__':
     ''' If script is run as stand alone
     '''
-
-    '''
-    if len(sys.argv) != 2:
         
-        sys.exit('Give the link to the json file to run the process as the only argument')
-    
-    #Get the json file
-    jsonFPN = sys.argv[1]
-    
-    if not os.path.exists(jsonFPN):
-        
-        exitstr = 'json file not found: %s' %(jsonFPN)
-    ''' 
-         
-    jsonFPN = "/Users/thomasgumbricht/docs-local/OSSL/model_ossl.json"
-    
-    iniParams = ReadAnyJson(jsonFPN)
-
-    SetupProcesses(iniParams)
-    
-    '''
     docpath = '/Users/thomasgumbricht/docs-local/OSSL/Sweden/LUCAS'
     #docpath = '/Users/thomasgumbricht/docs-local/OSSL/Europe/LUCAS'
     
@@ -3110,4 +2364,3 @@ if __name__ == '__main__':
     jsonpath = 'json-ml-modeling'
         
     SetupProcesses(docpath, createjsonparams , arrangeddatafolder, projFN, jsonpath)
-    '''
