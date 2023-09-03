@@ -1,0 +1,12 @@
+name: spectraossl_py38
+channels:
+  - defaults
+dependencies:
+  - scikit-learn
+  - pandas
+  - numpy
+  - python=3.8
+  - matplotlib
+  - psycopg2
+  - requests
+prefix: /Applications/anaconda3/envs/spectraossl_py38
